@@ -1,0 +1,16 @@
+<script>
+// Paste right before </body> in a page that has CSS/WAAPI animations or window.renderAt(t).
+// Open anim.html?t=2.5 to see the exact frame at 2.5 s. render.mjs does the same seek for every frame.
+(function () {
+  var q = new URLSearchParams(location.search);
+  if (!q.has('t')) return;
+  var t = parseFloat(q.get('t')) || 0;
+  function freeze() {
+    if (typeof window.renderAt === 'function') window.renderAt(t);
+    document.getAnimations().forEach(function (a) { a.pause(); a.currentTime = t * 1000; });
+  }
+  freeze();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { freeze(); window.__ready = true; });
+  window.addEventListener('load', freeze);
+})();
+</script>

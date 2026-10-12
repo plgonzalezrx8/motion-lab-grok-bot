@@ -1,0 +1,89 @@
+<!doctype html>
+<!-- title-loop: runnable reference build that follows the render contract.
+     4 s seamless loop, 1080x1080, Canvas 2D, no libraries, no network.
+     Preview: open index.html (plays live). Freeze: index.html?t=1.5. Debug overlay: ?debug=1
+     Render: node ../../scripts/render.mjs index.html --seconds 4 --fps 24 --width 1080 --height 1080 --out out -->
+<html><head><meta charset="utf-8"><title>title-loop</title>
+<style>html,body{margin:0;height:100%;background:#F3F1EC;overflow:hidden}canvas{display:block;width:100vw;height:100vh}</style>
+</head><body><canvas id="c"></canvas>
+<script>
+(() => {
+  // ---- tokens (inlined from kit/motion.js) ----
+  const bez = ([x1, y1, x2, y2]) => { const cx=3*x1,bx=3*(x2-x1)-cx,ax=1-cx-bx,cy=3*y1,by=3*(y2-y1)-cy,ay=1-cy-by;
+    const sx=t=>((ax*t+bx)*t+cx)*t, sy=t=>((ay*t+by)*t+cy)*t, dx=t=>(3*ax*t+2*bx)*t+cx;
+    return u => { if (u<=0) return 0; if (u>=1) return 1; let t=u; for (let i=0;i<8;i++){const e=sx(t)-u,d=dx(t); if(Math.abs(e)<1e-6||Math.abs(d)<1e-6)break; t-=e/d;} return sy(t); }; };
+  const E = { enter: bez([0.16,1,0.3,1]), move: bez([0.76,0,0.24,1]), exit: bez([0.7,0,0.84,0]) };
+  const spring = (t, z=0.7, f=2) => { if (t<=0) return 0; const w=2*Math.PI*f; if (z>=1) return 1-Math.exp(-w*t)*(1+w*t);
+    const wd=w*Math.sqrt(1-z*z); return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+(z*w/wd)*Math.sin(wd*t)); };
+  const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)), lerp=(a,b,u)=>a+(b-a)*u, prog=(t,s,d,fn=u=>u)=>fn(clamp((t-s)/d));
+  const rng = seed => () => { seed=(seed+0x6d2b79f5)>>>0; let t=seed; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; };
+
+  // ---- spec ----
+  const LOOP = 4, W = 1080, H = 1080, FPS = 24;
+  const C = { bg: '#F3F1EC', bgEdge: '#E4E0D8', ink: '#1A1A1A', accent: '#2F9C95', mute: '#8E8A83' };
+  const WORD = 'STUDIO', FONT = '800 190px "Helvetica Neue", Arial, "DejaVu Sans", sans-serif';
+  // Shots (seconds): 0-0.35 accent square settles; 0.35 letters rise on a spring, 2 frames apart (z 0.55, 2.2 Hz);
+  // 1.1 underline draws (ease-out-expo, 0.5 s); 1.2-2.7 hold with a 2% push; 2.0 glint; 2.75 exit, letters drop (ease-in-expo, 0.35 s, 40% shorter);
+  // 3.2-3.8 square returns to frame-0 pose. Square turns exactly 90 deg per loop (linear phase) so the seam is invisible.
+
+  const cv = document.getElementById('c'), g = cv.getContext('2d');
+  cv.width = W; cv.height = H;
+  const params = new URLSearchParams(location.search), DEBUG = params.has('debug');
+  const grain = (() => { const r = rng(7), n = document.createElement('canvas'); n.width = n.height = 256; const x = n.getContext('2d'), d = x.createImageData(256,256);
+    for (let i=0;i<d.data.length;i+=4){const v=r()*255; d.data[i]=d.data[i+1]=d.data[i+2]=v; d.data[i+3]=10;} x.putImageData(d,0,0); return n; })();
+  let widths = [], total = 0;
+
+  function renderAt(t) {
+    t = ((t % LOOP) + LOOP) % LOOP;
+    const ph = t / LOOP, f = Math.round(t * FPS);
+    // backdrop: radial gradient, dithered by seeded grain
+    const bg = g.createRadialGradient(W/2, H/2, 0, W/2, H/2, W*0.75); bg.addColorStop(0, C.bg); bg.addColorStop(1, C.bgEdge);
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    const push = 1 + 0.02 * prog(t, 1.2, 1.5, E.move) - 0.02 * prog(t, 2.75, 0.6, E.move);
+    g.save(); g.translate(W/2, H/2); g.scale(push, push);
+
+    // accent square: ambient, periodic. 90 deg per loop, breathes 4% on a 2 s sine (2 whole cycles per loop).
+    const sq = 46 * (1 + 0.04 * Math.sin(ph * 4 * Math.PI));
+    const lift = prog(t, 0.15, 0.5, E.enter) - prog(t, 3.2, 0.6, E.move);   // 0 at the seam
+    g.save(); g.translate(0, -230 * lift); g.rotate(ph * Math.PI / 2);
+    g.fillStyle = C.accent; g.fillRect(-sq/2, -sq/2, sq, sq); g.restore();
+
+    // letters: hero move
+    g.font = FONT; g.textBaseline = 'alphabetic';
+    // glint: a soft band crossing the word once, painted only inside the glyphs (second fill with a gradient)
+    const gl = prog(t, 2.0, 0.55, E.move), gx = lerp(-total / 2 - 200, total / 2 + 200, gl);
+    let x = -total / 2;
+    for (let i = 0; i < WORD.length; i++) {
+      const tin = t - 0.35 - i * (2 / FPS);
+      const sIn = spring(tin, 0.55, 2.2);
+      const out = prog(t, 2.75 + i * (1 / FPS), 0.35, E.exit);
+      const y = lerp(140, 0, sIn) + 260 * out;
+      const a = clamp(tin * 8) * (1 - out);
+      if (a > 0) {
+        g.save(); g.globalAlpha = a; g.translate(x + widths[i] / 2, 60 + y);
+        const sy = 1 + 0.12 * (1 - sIn) * (tin > 0 ? 1 : 0); g.scale(1 / Math.sqrt(sy), sy);
+        g.fillStyle = C.ink; g.textAlign = 'center'; g.fillText(WORD[i], 0, 0);
+        if (gl > 0 && gl < 1) { const lx = gx - (x + widths[i] / 2), band = g.createLinearGradient(lx - 90, 0, lx + 90, 0);
+          band.addColorStop(0, 'rgba(255,255,255,0)'); band.addColorStop(0.5, 'rgba(255,255,255,0.6)'); band.addColorStop(1, 'rgba(255,255,255,0)');
+          g.fillStyle = band; g.fillText(WORD[i], 0, 0); }
+        g.restore();
+      }
+      x += widths[i];
+    }
+    // underline: ease-out-expo draw, ease-in exit to the right
+    const uIn = prog(t, 1.1, 0.5, E.enter), uOut = prog(t, 2.7, 0.3, E.exit);
+    if (uIn > 0 && uOut < 1) { g.fillStyle = C.accent; const x0 = -total/2 + total * uOut, x1 = -total/2 + total * uIn; g.fillRect(x0, 100, Math.max(0, x1 - x0), 12); }
+    g.restore();
+    g.drawImage(grain, 0, 0, W, H);
+    if (DEBUG) { g.fillStyle = C.mute; g.font = '500 28px monospace'; g.fillText(`f ${String(f).padStart(3,'0')}  t ${t.toFixed(3)}`, 32, H - 36); }
+  }
+  window.renderAt = renderAt;
+
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
+    g.font = FONT; widths = [...WORD].map(ch => g.measureText(ch).width * 0.98); total = widths.reduce((a, b) => a + b, 0);
+    if (params.has('t')) renderAt(parseFloat(params.get('t')) || 0);
+    else { const t0 = performance.now(); const loop = (now) => { renderAt(((now - t0) / 1000) % LOOP); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+    window.__ready = true;
+  });
+})();
+</script></body></html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<!-- starter-three: three.js r160 (pinned) skeleton that satisfies the render contract.
+     r160 trap: TextGeometry reads `height` for extrusion depth; a `depth` option is ignored and the default (50) wins. -->
+<html><head><meta charset="utf-8"><title>starter-three</title>
+<style>html,body{margin:0;height:100%;background:#EEEAE4;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const LOOP = 6, q = new URLSearchParams(location.search);
+const W = innerWidth, H = innerHeight;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H);
+renderer.toneMapping = THREE.NeutralToneMapping; renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#EEEAE4');
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 100);
+
+const key = new THREE.DirectionalLight('#FFF4E8', 3.0); key.position.set(-6, 10, 8); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 1, far: 40 }); scene.add(key);
+const fill = new THREE.DirectionalLight('#E8EEF5', 0.6); fill.position.set(6, -2, 4); scene.add(fill);
+const rim = new THREE.DirectionalLight('#FFFFFF', 4.0); rim.position.set(4, 8, -10); scene.add(rim);
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.25 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const box = new THREE.Mesh(new RoundedBoxGeometry(2, 2, 2, 6, 0.25),
+  new THREE.MeshPhysicalMaterial({ color: '#F4F1EC', roughness: 0.38, clearcoat: 0.35 }));
+box.castShadow = true; scene.add(box);
+
+const spring = (t, z = 0.6, f = 2) => { if (t <= 0) return 0; const w = 2 * Math.PI * f, wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + (z * w / wd) * Math.sin(wd * t)); };
+
+window.renderAt = (t) => {
+  t = ((t % LOOP) + LOOP) % LOOP; const ph = t / LOOP;
+  const hop = spring(t - 1.0) - spring(t - 4.0);                // up at 1.0 s, back down at 4.0 s
+  box.position.y = 1 + 1.2 * hop;
+  box.rotation.y = ph * Math.PI / 2;                            // 90 deg per loop: seamless
+  const az = 0.6 + 0.15 * Math.sin(ph * 2 * Math.PI);           // camera never parks, periodic
+  camera.position.set(Math.sin(az) * 12, 4.5, Math.cos(az) * 12); camera.lookAt(0, 1.4, 0);
+  renderer.render(scene, camera);
+};
+
+if (q.has('t')) window.renderAt(parseFloat(q.get('t')) || 0);
+else { const t0 = performance.now(); renderer.setAnimationLoop((n) => window.renderAt((n - t0) / 1000)); }
+window.__ready = true;
+</script></body></html>

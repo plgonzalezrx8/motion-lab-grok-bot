@@ -1,0 +1,24 @@
+<!doctype html>
+<!-- starter-2d: Canvas 2D skeleton that satisfies the render contract. Copy into your project, then replace draw(). -->
+<html><head><meta charset="utf-8"><title>starter-2d</title>
+<style>html,body{margin:0;height:100%;background:#F3F1EC;overflow:hidden}canvas{display:block;width:100vw;height:100vh;object-fit:contain}</style>
+</head><body><canvas id="c"></canvas>
+<script type="module">
+// Paste kit/motion.js contents here (or inline only what you use): the page must stay self-contained.
+const LOOP = 6, W = 1080, H = 1080;
+const cv = document.getElementById('c'), g = cv.getContext('2d'); cv.width = W; cv.height = H;
+const q = new URLSearchParams(location.search);
+
+function draw(t) {               // t in [0, LOOP)
+  const ph = t / LOOP;
+  g.fillStyle = '#F3F1EC'; g.fillRect(0, 0, W, H);
+  g.save(); g.translate(W / 2, H / 2); g.rotate(ph * Math.PI / 2);   // exactly 90 deg per loop
+  g.fillStyle = '#1A1A1A'; g.fillRect(-80, -80, 160, 160); g.restore();
+}
+window.renderAt = (t) => draw(((t % LOOP) + LOOP) % LOOP);
+
+await (document.fonts ? document.fonts.ready : Promise.resolve());
+if (q.has('t')) window.renderAt(parseFloat(q.get('t')) || 0);
+else { const t0 = performance.now(); const tick = (n) => { window.renderAt((n - t0) / 1000); requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
+window.__ready = true;
+</script></body></html>

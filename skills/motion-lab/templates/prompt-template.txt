@@ -1,0 +1,11 @@
+GOAL: what the viewer should feel or do, in one sentence
+OUTPUT: one self-contained HTML file (or a Remotion composition), W x H, engine + pinned version
+TIME: seconds x fps = total frames. Loop: yes or no. BPM if it has a beat (frames per beat = fps x 60 / BPM)
+LOOK: palette in hex, one accent, typeface + weight + size + tracking (3D: materials, lights with color/strength/position)
+MOTION: easing as cubic-bezier, springs as damping ratio, durations in frames
+SHOTS: frame ranges, one hero move per shot, how each shot hands off (cut on the beat by default)
+CAMERA (3D): fov, distance, orbit, push-ins with their easing and frames
+BANNED: the defaults you never want to see
+QA: stills at named frames, a contact sheet, fix, then the full render
+
+[paste templates/render-contract.txt here]

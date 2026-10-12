@@ -1,0 +1,49 @@
+motion-lab-grok-bot
+===================
+
+This plugin adapts the motion-design method published by Florence (@flxrnc)
+in the X article "Opus 5.5 Motion Lab: Make Claude Animate Like a Studio"
+(posted 2026-09-30).
+
+Original work:  "Motion Lab" article by Florence (@flxrnc)
+Source:         https://x.com/flxrnc/status/2105311836190978392
+                (article: https://x.com/i/article/2105052379590578176)
+Author site:    https://www.imflorence.xyz/
+
+Packaged by:    Pedro Gonzalez / Blueforce Innovations
+
+Adapted from the article (prompts and techniques are hers):
+- The directed-prompt template, the render contract, the ban list, the motion
+  numbers (easing table, damping-ratio rule, durations, stagger, beat grid,
+  holds), the render/look/fix lab loop, the follow-up library, the fixes
+  table, the sound rules and the X export settings and limits
+  (skills/motion-lab/references/, templates/).
+- kit/motion.js builds on the article's tokens file and closed-form spring.
+- scripts/render.mjs, contact-sheet.sh and export.sh build on the article's
+  renderer and ffmpeg commands.
+- examples/earbuds, examples/liquid-chrome and examples/mascot reproduce the
+  article's prompts and every follow-up, rebranded: the original accent color
+  became 2F9C95, the liquid-chrome title became "STUDIO" (drop and note counts
+  adjusted), and the mascot became an original voxel robot. Timings,
+  materials, lights, springs and measurements are unchanged.
+
+Changed for Grok Bot and Cursor:
+- Removed model names, effort/fast-mode settings, pricing, the chat-app
+  preview path and coding-agent install steps from the original.
+- Rewrote the loop for an agent working on a box: Shell runs the scripts,
+  images are read inline, results are attached as MP4/GIF files.
+- render.mjs uses playwright-core with system Chrome, waits for
+  window.__ready, takes size/fps/duration from arguments, supports stills,
+  frame ranges and subframe motion blur, and uses software WebGL when there
+  is no GPU.
+
+Original to this plugin: audio-render.mjs, audio-hits.mjs, audio-check.sh,
+frame-diff.sh, loop-check.sh, examples/title-loop, the starter templates,
+the logo and the screenshot.
+
+Not included: the article's videos and images.
+
+The article was published without a license. This is an independent
+adaptation with credit and is not an official release by the original
+author. Florence's prompts and text remain hers; on request from the author
+the adapted material will be changed or removed.

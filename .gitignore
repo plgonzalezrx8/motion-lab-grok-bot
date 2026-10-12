@@ -1,0 +1,10 @@
+node_modules/
+out/
+**/out/
+*.mp4
+*.gif
+*.wav
+*.png
+!assets/*.png
+.DS_Store
+package-lock.json

@@ -1,0 +1,25 @@
+{
+  "name": "motion-lab-grok-bot",
+  "displayName": "Motion Lab for Grok Bot",
+  "version": "0.1.0",
+  "description": "Studio-quality motion design from code: directed briefs that turn adjectives into numbers, frame-exact HTML/Canvas/Three.js or Remotion renders, stills and contact sheets reviewed frame by frame, a code-synthesized soundtrack, and X-ready MP4 + GIF exports. Adapted from Florence (@flxrnc)'s Motion Lab article for Cursor and Grok Bot.",
+  "author": {
+    "name": "Pedro Gonzalez / Blueforce Innovations",
+    "email": "pedrogonzalez@blueforceinnovations.com"
+  },
+  "homepage": "https://github.com/plgonzalezrx8/motion-lab-grok-bot",
+  "repository": "https://github.com/plgonzalezrx8/motion-lab-grok-bot",
+  "license": "MIT",
+  "keywords": [
+    "motion-design",
+    "animation",
+    "three.js",
+    "remotion",
+    "ffmpeg",
+    "gif",
+    "video",
+    "web-audio",
+    "skills"
+  ],
+  "logo": "assets/logo.svg"
+}
